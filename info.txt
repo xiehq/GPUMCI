@@ -1,0 +1,4 @@
+The following environment variables should be set:
+
+GPUMCIDIR=directory containing  GPUMCI and gpumci.h
+GPUMCI_DATA_DIR= directory containing test data ..\mcdata\data

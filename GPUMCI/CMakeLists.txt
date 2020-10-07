@@ -1,0 +1,7 @@
+add_subdirectory (detector)
+add_subdirectory (interactions)
+add_subdirectory (implementations)
+add_subdirectory (photongenerator)
+add_subdirectory (physics)
+add_subdirectory (rng)
+add_subdirectory (utils)
