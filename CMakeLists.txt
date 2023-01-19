@@ -63,9 +63,12 @@ if (MSVC)
     endif()
 else()
 	include(CheckCXXCompilerFlag)
+	CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
 	CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 	CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-	if(COMPILER_SUPPORTS_CXX11)
+	if(COMPILER_SUPPORTS_CXX14)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  elseif(COMPILER_SUPPORTS_CXX11)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 	elseif()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
@@ -80,7 +83,9 @@ else()
 	set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
     #Enable c++11
-	set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++11 -Xcompiler -fPIC)
+	#set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++11 -Xcompiler -fPIC)
+	#Enable c++14
+	set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++14 -Xcompiler -fPIC)
 endif()
 
 
