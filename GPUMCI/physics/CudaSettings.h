@@ -22,6 +22,17 @@ struct CudaMonteCarloParticle {
         assert(norm(direction) < 1.001f);
     }
 
+    void setPosition(const Eigen::Vector3f& position_)
+    {
+      position = make_float3(position_);
+    }
+
+    void setDirection(const Eigen::Vector3f& direction_)
+    {
+      direction = make_float3(direction_);
+    }
+
+
     float3 position;
     float3 direction;
     float energy;
