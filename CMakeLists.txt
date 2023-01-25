@@ -36,6 +36,10 @@ set(CUDA_COMPUTE "52" CACHE STRING "Cuda compute capability to compile for")
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_${CUDA_COMPUTE},code=sm_${CUDA_COMPUTE})
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-lineinfo)
 
+#these are for eigen should be set to target build but this is easier
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};--expt-relaxed-constexpr)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-Xcudafe --diag_suppress=esa_on_defaulted_function_ignored)
+
 # Enable fast math
 option(CUDA_USE_FAST_MATH "Enable fast math in cuda (can decrease precision)" TRUE)
 if(CUDA_USE_FAST_MATH)

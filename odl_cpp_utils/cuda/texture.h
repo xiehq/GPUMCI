@@ -44,7 +44,8 @@ struct BoundTexture1D {
     }
 
     void setData(const T* source) {
-        CUDA_SAFE_CALL(cudaMemcpyToArray(_arr, 0, 0, source, size * sizeof(T), cudaMemcpyDeviceToDevice));
+        //CUDA_SAFE_CALL(cudaMemcpyToArray(_arr, 0, 0, source, size * sizeof(T), cudaMemcpyDeviceToDevice));
+        CUDA_SAFE_CALL(cudaMemcpy2DToArray(_arr, 0, 0, source, size * sizeof(T),  size * sizeof(T), 1, cudaMemcpyDeviceToDevice));
         has_data = true;
     }
 

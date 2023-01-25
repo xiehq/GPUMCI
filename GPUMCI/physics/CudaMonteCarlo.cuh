@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <texture_fetch_functions.h>
-#include <device_functions.h>
+
 
 #include <iostream>
 
