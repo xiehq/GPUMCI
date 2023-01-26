@@ -39,9 +39,12 @@ class PhaseSpaceMC {
                  const Eigen::Vector3d& voxelSize,
                  const Eigen::Vector2i& detectorSize,
                  unsigned n_runs,
+                 unsigned n_threads,
                  const MaterialData& materials,
                  const InteractionTables& rayleighTables,
                  const InteractionTables& comptonTables);
+
+    void setData(const std::vector<float> &densityHost, const std::vector<uint8_t> &materialTypeHost);
 
     /*
      * Update the volume data used by the forward projector
@@ -78,6 +81,7 @@ class PhaseSpaceMC {
   private:
     cuda::CudaParameters _param;
     const Eigen::Vector2i _detectorSize;
+    const unsigned _nThreads; //gjb
     const unsigned _nRuns;
     std::shared_ptr<cuda::PhaseSpaceMCCuData> _cudaData;
 };

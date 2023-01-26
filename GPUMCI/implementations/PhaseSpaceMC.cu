@@ -4,9 +4,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include <odl_cpp_utils/cuda/disableThrustWarnings.h>
+#include <LCRUtils/cuda/disableThrustWarnings.h>
 #include <thrust/device_vector.h>
-#include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <LCRUtils/cuda/enableThrustWarnings.h>
 
 #include <GPUMCI/implementations/PhaseSpaceMC.h>
 
@@ -26,14 +26,14 @@
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <odl_cpp_utils/utils/cast.h>
-#include <odl_cpp_utils/cuda/texture.h>
+#include <LCRUtils/utils/cast.h>
+#include <LCRUtils/cuda/texture.h>
 
 namespace gpumci {
 namespace cuda {
 namespace {
 unsigned nThreads(int2 detectorSize) {
-    return 100000; // detectorSize.x * detectorSize.y;
+     return detectorSize.x * detectorSize.y;//return 100000; //gjb
 }
 }
 
@@ -41,6 +41,7 @@ unsigned nThreads(int2 detectorSize) {
 struct PhaseSpaceMCCuData {
     PhaseSpaceMCCuData(const int3 volumeSize,
                        const int2 detectorSize,
+                       const unsigned &numThreads,
                        const MaterialData& attenuationData_,
                        const InteractionTables& rayleighTables,
                        const InteractionTables& comptonTables)
@@ -53,7 +54,7 @@ struct PhaseSpaceMCCuData {
                                                                        cudaAddressModeClamp,
                                                                        cudaFilterModePoint,
                                                                        cudaReadModeElementType)),
-          rng(nThreads(detectorSize)),
+          rng(numThreads), //rng(nThreads(detectorSize)),
           rayleigh(rayleighTables),
           compton(comptonTables) { //detectorSize.x * detectorSize.y) {
 
@@ -74,7 +75,7 @@ struct PhaseSpaceMCCuData {
     PhaseSpaceMCCuData& operator=(const PhaseSpaceMCCuData&) = delete;
 
     const MaterialData attenuationData;
-    std::shared_ptr<BoundTexture3D<float>> densityVolume;
+    std::shared_ptr<BoundTexture3D<float>> densityVolume; //row major order data
     std::shared_ptr<BoundTexture3D<uint8_t>> materialTypeVolume;
     std::shared_ptr<BoundTexture2D<float4>> texMaterial;
     std::shared_ptr<WoodcockStep> woodcockStep;
@@ -89,15 +90,18 @@ PhaseSpaceMC::PhaseSpaceMC(const Eigen::Vector3i& volumeSize,
                            const Eigen::Vector3d& voxelSize,
                            const Eigen::Vector2i& detectorSize,
                            unsigned n_runs,
+                           unsigned n_threads,
                            const MaterialData& attenuationData,
                            const InteractionTables& rayleighTables,
                            const InteractionTables& comptonTables)
     : _param{volumeSize, volumeOrigin, voxelSize, attenuationData.energyStep},
       _detectorSize(detectorSize),
+      _nThreads(n_threads),
       _nRuns(n_runs) {
     // Initialize the cuda side
     _cudaData = std::make_shared<cuda::PhaseSpaceMCCuData>(make_int3(volumeSize),
                                                            make_int2(detectorSize),
+                                                           n_threads,
                                                            attenuationData,
                                                            rayleighTables,
                                                            comptonTables);
@@ -118,6 +122,15 @@ void PhaseSpaceMC::setData(const float* densityDevice,
                                                                    _param.invEnergyStep,
                                                                    _cudaData->attenuationData);
 }
+
+void PhaseSpaceMC::setData(const std::vector<float>& densityHost,
+    const std::vector<uint8_t>& materialHost)
+{
+    thrust::device_vector<float> dDevice(densityHost);
+    thrust::device_vector<uint8_t> mDevice(materialHost);
+    setData(thrust::raw_pointer_cast(&dDevice[0]), thrust::raw_pointer_cast(&mDevice[0]));
+}
+
 void PhaseSpaceMC::project(const Eigen::Vector3d& sourcePosition,
                            const Eigen::Vector3d& detectorOrigin,
                            const Eigen::Vector3d& pixelDirectionU,
@@ -126,17 +139,27 @@ void PhaseSpaceMC::project(const Eigen::Vector3d& sourcePosition,
                            float* primary,
                            float* scatter) const {
     // Setup kernel configuration
-    unsigned numberOfThreads = cuda::nThreads(make_int2(_detectorSize));
-    float2 inversePixelSize = make_float2(1.0f / (float)pixelDirectionU.norm(),
-                                          1.0f / (float)pixelDirectionV.norm());
 
-    /*
+    /* old way ---
+    unsigned numberOfThreads = cuda::nThreads(make_int2(_detectorSize));
+
+
     if (particles.size() > numberOfThreads)
         throw std::invalid_argument("phase space to large, allocated to little rng");
     else
         numberOfThreads = narrow_cast<unsigned>(particles.size());
-*/
-    numberOfThreads = min(narrow_cast<unsigned>(particles.size()), numberOfThreads);
+    */
+
+    //new way simplified
+    unsigned numberOfThreads = _nThreads;
+    if (particles.size() > numberOfThreads)
+        throw std::invalid_argument("phase space to large, allocated to little rng");
+    else
+        numberOfThreads = narrow_cast<unsigned>(particles.size());
+
+    float2 inversePixelSize = make_float2(1.0f / (float)pixelDirectionU.norm(),
+        1.0f / (float)pixelDirectionV.norm());
+
     // Create a detector
     cuda::DetectorCBCTScatter detector{make_float3(detectorOrigin),
                                        make_float3(pixelDirectionU),
@@ -148,7 +171,7 @@ void PhaseSpaceMC::project(const Eigen::Vector3d& sourcePosition,
                                        scatter};
 
     //Use a phase space photon generator
-    cuda::PhotonGeneratorPhaseSpace photonGenerator{particles, _nRuns, numberOfThreads};
+    cuda::PhotonGeneratorPhaseSpace photonGenerator{particles, _nRuns};
 
     //Simple interaction handler
     auto interaction = cuda::makePhotonInteractionHandler(_cudaData->compton.deviceSide(),
@@ -164,5 +187,7 @@ void PhaseSpaceMC::project(const Eigen::Vector3d& sourcePosition,
                 detector,
                 _cudaData->woodcockStep->deviceSide(),
                 _cudaData->rng.deviceSide());
+
+
 }
 }

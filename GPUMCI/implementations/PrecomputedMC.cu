@@ -4,9 +4,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include <odl_cpp_utils/cuda/disableThrustWarnings.h>
+#include <LCRUtils/cuda/disableThrustWarnings.h>
 #include <thrust/device_vector.h>
-#include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <LCRUtils/cuda/enableThrustWarnings.h>
 
 #include <GPUMCI/implementations/PrecomputedMC.h>
 
@@ -27,8 +27,8 @@
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <odl_cpp_utils/utils/cast.h>
-#include <odl_cpp_utils/cuda/texture.h>
+#include <LCRUtils/utils/cast.h>
+#include <LCRUtils/cuda/texture.h>
 
 namespace gpumci {
 namespace cuda {
@@ -119,6 +119,16 @@ void PrecomputedMC::setData(const float* densityDevice,
                                                                    _param.invEnergyStep,
                                                                    _cudaData->attenuationData);
 }
+
+
+void PrecomputedMC::setData(const std::vector<float>& densityHost,
+    const std::vector<uint8_t>& materialHost)
+{
+    thrust::device_vector<float> dDevice(densityHost);
+    thrust::device_vector<uint8_t> mDevice(materialHost);
+    setData(thrust::raw_pointer_cast(&dDevice[0]), thrust::raw_pointer_cast(&mDevice[0]));
+}
+
 
 void PrecomputedMC::project(const Eigen::Vector3d& sourcePosition,
                             const Eigen::Vector3d& detectorOrigin,

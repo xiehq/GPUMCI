@@ -44,6 +44,18 @@ class PrecomputedMC {
                   const InteractionTables& comptonTables);
 
     /*
+    * Update the volume data used by the forward projector
+    *
+    * Volumes should be given in standard cuda ordering (Fortran/Column major)
+    *
+    * All data is host data
+    *
+    */
+    void setData(const std::vector<float> &densityHost,
+        const std::vector<uint8_t> &materialTypeHost);
+
+
+    /*
      * Update the volume data used by the forward projector
      *
      * Volumes should be given in standard cuda ordering (Fortran/Column major)
