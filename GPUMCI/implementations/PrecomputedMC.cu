@@ -4,9 +4,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include <LCRUtils/cuda/disableThrustWarnings.h>
+#include <odl_cpp_utils/cuda/disableThrustWarnings.h>
 #include <thrust/device_vector.h>
-#include <LCRUtils/cuda/enableThrustWarnings.h>
+#include <odl_cpp_utils/cuda/enableThrustWarnings.h>
 
 #include <GPUMCI/implementations/PrecomputedMC.h>
 
@@ -27,8 +27,8 @@
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <LCRUtils/utils/cast.h>
-#include <LCRUtils/cuda/texture.h>
+#include <odl_cpp_utils/utils/cast.h>
+#include <odl_cpp_utils/cuda/texture.h>
 
 namespace gpumci {
 namespace cuda {

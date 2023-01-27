@@ -4,9 +4,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include <LCRUtils/cuda/disableThrustWarnings.h>
+#include <odl_cpp_utils/cuda/disableThrustWarnings.h>
 #include <thrust/device_vector.h>
-#include <LCRUtils/cuda/enableThrustWarnings.h>
+#include <odl_cpp_utils/cuda/enableThrustWarnings.h>
 
 #include <GPUMCI/implementations/PhaseSpaceMC.h>
 
@@ -26,8 +26,8 @@
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <LCRUtils/utils/cast.h>
-#include <LCRUtils/cuda/texture.h>
+#include <odl_cpp_utils/utils/cast.h>
+#include <odl_cpp_utils/cuda/texture.h>
 
 namespace gpumci {
 namespace cuda {
@@ -85,6 +85,7 @@ struct PhaseSpaceMCCuData {
 };
 }
 
+/* modified constructor GJB* with ability to set num of threads*/
 PhaseSpaceMC::PhaseSpaceMC(const Eigen::Vector3i& volumeSize,
                            const Eigen::Vector3d& volumeOrigin,
                            const Eigen::Vector3d& voxelSize,
@@ -106,6 +107,30 @@ PhaseSpaceMC::PhaseSpaceMC(const Eigen::Vector3i& volumeSize,
                                                            rayleighTables,
                                                            comptonTables);
 }
+
+/* Original Constructor*/
+PhaseSpaceMC::PhaseSpaceMC(const Eigen::Vector3i& volumeSize,
+                           const Eigen::Vector3d& volumeOrigin,
+                           const Eigen::Vector3d& voxelSize,
+                           const Eigen::Vector2i& detectorSize,
+                           unsigned n_runs,
+                           const MaterialData& attenuationData,
+                           const InteractionTables& rayleighTables,
+                           const InteractionTables& comptonTables)
+    : _param{volumeSize, volumeOrigin, voxelSize, attenuationData.energyStep},
+      _detectorSize(detectorSize),
+      _nThreads(cuda::nThreads(make_int2(_detectorSize))),
+      _nRuns(n_runs) 
+{
+    // Initialize the cuda side
+    _cudaData = std::make_shared<cuda::PhaseSpaceMCCuData>(make_int3(volumeSize),
+                                                           make_int2(detectorSize),
+                                                           _nThreads,
+                                                           attenuationData,
+                                                           rayleighTables,
+                                                           comptonTables);
+}
+
 
 void PhaseSpaceMC::setData(const float* densityDevice,
                            const uint8_t* materialTypeDevice) {
@@ -140,22 +165,17 @@ void PhaseSpaceMC::project(const Eigen::Vector3d& sourcePosition,
                            float* scatter) const {
     // Setup kernel configuration
 
-    /* old way ---
-    unsigned numberOfThreads = cuda::nThreads(make_int2(_detectorSize));
-
-
+  
+    /*
     if (particles.size() > numberOfThreads)
         throw std::invalid_argument("phase space to large, allocated to little rng");
     else
         numberOfThreads = narrow_cast<unsigned>(particles.size());
     */
-
-    //new way simplified
     unsigned numberOfThreads = _nThreads;
-    if (particles.size() > numberOfThreads)
-        throw std::invalid_argument("phase space to large, allocated to little rng");
-    else
-        numberOfThreads = narrow_cast<unsigned>(particles.size());
+    numberOfThreads = min(narrow_cast<unsigned>(particles.size()), numberOfThreads);
+
+
 
     float2 inversePixelSize = make_float2(1.0f / (float)pixelDirectionU.norm(),
         1.0f / (float)pixelDirectionV.norm());
@@ -171,7 +191,7 @@ void PhaseSpaceMC::project(const Eigen::Vector3d& sourcePosition,
                                        scatter};
 
     //Use a phase space photon generator
-    cuda::PhotonGeneratorPhaseSpace photonGenerator{particles, _nRuns};
+    cuda::PhotonGeneratorPhaseSpace photonGenerator{particles, _nRuns, numberOfThreads};
 
     //Simple interaction handler
     auto interaction = cuda::makePhotonInteractionHandler(_cudaData->compton.deviceSide(),

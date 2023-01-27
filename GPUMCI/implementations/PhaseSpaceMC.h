@@ -29,6 +29,9 @@ class PhaseSpaceMC {
      *   voxelSize      Size of a voxel
      *   detectorSize   Size of detector (in pixels)
      *   n_runs         Number of runs that should be performed
+     *   n_threads      Lets you set the number of threads to run in parallel, 
+     *                  forced to be less than or equal to the number of 
+     *                  particles in the phsp data
      *   materials      Material attenuation data
      *   rayleighTables Precomputed rayleigh interaction angles
      *   comptonTables  Precomputed compton interaction angles
@@ -43,6 +46,32 @@ class PhaseSpaceMC {
                  const MaterialData& materials,
                  const InteractionTables& rayleighTables,
                  const InteractionTables& comptonTables);
+  
+    
+        /*
+     * All paramters are given in mm, original constructor number of threads is based on detector size
+     *
+     * Parameters:
+     *   volumeSize     size of the volume (in voxels)
+     *   volumeOrigin   position of the lowermost corner of the volume
+     *   voxelSize      Size of a voxel
+     *   detectorSize   Size of detector (in pixels)
+     *   n_runs         Number of runs that should be performed 
+     *                  (this is the number of times the partice is resused)
+     *   materials      Material attenuation data
+     *   rayleighTables Precomputed rayleigh interaction angles
+     *   comptonTables  Precomputed compton interaction angles
+     *
+     */
+    PhaseSpaceMC(const Eigen::Vector3i& volumeSize,
+                 const Eigen::Vector3d& volumeOrigin,
+                 const Eigen::Vector3d& voxelSize,
+                 const Eigen::Vector2i& detectorSize,
+                 unsigned n_runs,
+                 const MaterialData& materials,
+                 const InteractionTables& rayleighTables,
+                 const InteractionTables& comptonTables);
+
 
     void setData(const std::vector<float> &densityHost, const std::vector<uint8_t> &materialTypeHost);
 

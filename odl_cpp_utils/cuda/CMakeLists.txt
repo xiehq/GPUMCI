@@ -2,6 +2,7 @@ set(Headers
     cuda_utils.h
     cutil_math.h
     CudaMemory.h
+    CudaHostMemory.h
     CuVector.h
     disableThrustWarnings.h
     enableThrustWarnings.h
@@ -13,7 +14,8 @@ set(Sources
 	dummy.cpp)
 
 set(CudaFiles
-	CudaMemory.cu)
+	CudaMemory.cu
+  CudaHostMemory.cu)
 include_directories ("${PROJECT_SOURCE_DIR}")
 cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
