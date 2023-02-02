@@ -43,21 +43,21 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-Xcudafe --diag_suppress=esa_on_defaulted
 # Enable fast math
 option(CUDA_USE_FAST_MATH "Enable fast math in cuda (can decrease precision)" TRUE)
 if(CUDA_USE_FAST_MATH)
-	set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-use_fast_math)
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-use_fast_math)
 endif()
 
 # Add openMP
 option(OPENMP_ENABLED "Enable OpenMP" TRUE)
 if(OPENMP_ENABLED)
-	find_package(OpenMP QUIET REQUIRED)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    find_package(OpenMP QUIET REQUIRED)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 
 # C++ flags
 if (MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251 /bigobj")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251 /bigobj")
     
     #Set warning level 3
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -66,53 +66,53 @@ if (MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
     endif()
 else()
-	include(CheckCXXCompilerFlag)
-	CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
-	CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-	CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-	if(COMPILER_SUPPORTS_CXX14)
-    	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-		set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++14 -Xcompiler -fPIC)
-	elseif(COMPILER_SUPPORTS_CXX11)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-		set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++11 -Xcompiler -fPIC)
-	elseif(COMPILER_SUPPORTS_CXX0X)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-		set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++0x -Xcompiler -fPIC)
-	else()
-		message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++10 support. Please use a different C++ compiler.")
-	endif()
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+    CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+    CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+    if(COMPILER_SUPPORTS_CXX14)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++14 -Xcompiler -fPIC)
+    elseif(COMPILER_SUPPORTS_CXX11)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++11 -Xcompiler -fPIC)
+    elseif(COMPILER_SUPPORTS_CXX0X)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+        set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++0x -Xcompiler -fPIC)
+    else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++10 support. Please use a different C++ compiler.")
+    endif()
 
     #Position independent code is needed to link shared-static
     set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)    
 
     #Set proper flag propagation for cuda
-	set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-	
+    
 endif()
 
 
 # Python bindings
 option(PYTHON_ENABLED "Create python bindings" FALSE)
 if(PYTHON_ENABLED)
-	set(Boost_USE_SHARED_LIBS   ON)
-	set(Boost_USE_MULTITHREADED ON)
-	find_package(Boost COMPONENTS
-                 python
-				 REQUIRED)
-	include_directories(${Boost_INCLUDE_DIRS})
-	link_directories(${Boost_LIBRARY_DIRS})
-	
-	# Find python
-	find_package(PythonLibs REQUIRED)
-	include_directories(${PYTHON_INCLUDE_DIRS})
-	
-	# Find numpy
-	find_package(Numpy REQUIRED)
-	include_directories(${PYTHON_NUMPY_INCLUDE_DIR})
-	
-	link_directories(${PYTHON_LIBRARIES})
+    set(Boost_USE_SHARED_LIBS   ON)
+    set(Boost_USE_MULTITHREADED ON)
+    find_package(Boost COMPONENTS
+                python
+                REQUIRED)
+    include_directories(${Boost_INCLUDE_DIRS})
+    link_directories(${Boost_LIBRARY_DIRS})
+    
+    # Find python
+    find_package(PythonLibs REQUIRED)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    
+    # Find numpy
+    find_package(Numpy REQUIRED)
+    include_directories(${PYTHON_NUMPY_INCLUDE_DIR})
+    
+    link_directories(${PYTHON_LIBRARIES})
 
     #disable old
     add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
@@ -127,8 +127,6 @@ add_subdirectory(odl_cpp_utils)
 # Add sub directories as needed
 add_subdirectory(GPUMCI)
 if (PYTHON_ENABLED)
-	add_subdirectory(GPUMCIPy)
+    add_subdirectory(GPUMCIPy)
 endif()
 
-
-add_library
