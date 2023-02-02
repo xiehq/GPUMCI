@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <vector>
 #include <Eigen/Core>
-#include <stdint.h>
+#include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
 #include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/physics/MaterialEntry.h>
-#include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
+#include <memory>
+#include <stdint.h>
+#include <vector>
 
 namespace gpumci {
 namespace cuda {
@@ -29,8 +29,8 @@ class PhaseSpaceMC {
      *   voxelSize      Size of a voxel
      *   detectorSize   Size of detector (in pixels)
      *   n_runs         Number of runs that should be performed
-     *   n_threads      Lets you set the number of threads to run in parallel, 
-     *                  forced to be less than or equal to the number of 
+     *   n_threads      Lets you set the number of threads to run in parallel,
+     *                  forced to be less than or equal to the number of
      *                  particles in the phsp data
      *   materials      Material attenuation data
      *   rayleighTables Precomputed rayleigh interaction angles
@@ -46,9 +46,8 @@ class PhaseSpaceMC {
                  const MaterialData& materials,
                  const InteractionTables& rayleighTables,
                  const InteractionTables& comptonTables);
-  
-    
-        /*
+
+    /*
      * All paramters are given in mm, original constructor number of threads is based on detector size
      *
      * Parameters:
@@ -56,7 +55,7 @@ class PhaseSpaceMC {
      *   volumeOrigin   position of the lowermost corner of the volume
      *   voxelSize      Size of a voxel
      *   detectorSize   Size of detector (in pixels)
-     *   n_runs         Number of runs that should be performed 
+     *   n_runs         Number of runs that should be performed
      *                  (this is the number of times the partice is resused)
      *   materials      Material attenuation data
      *   rayleighTables Precomputed rayleigh interaction angles
@@ -72,8 +71,7 @@ class PhaseSpaceMC {
                  const InteractionTables& rayleighTables,
                  const InteractionTables& comptonTables);
 
-
-    void setData(const std::vector<float> &densityHost, const std::vector<uint8_t> &materialTypeHost);
+    void setData(const std::vector<float>& densityHost, const std::vector<uint8_t>& materialTypeHost);
 
     /*
      * Update the volume data used by the forward projector
@@ -110,8 +108,8 @@ class PhaseSpaceMC {
   private:
     cuda::CudaParameters _param;
     const Eigen::Vector2i _detectorSize;
-    const unsigned _nThreads; //gjb
+    const unsigned _nThreads; // gjb
     const unsigned _nRuns;
     std::shared_ptr<cuda::PhaseSpaceMCCuData> _cudaData;
 };
-}
+} // namespace gpumci

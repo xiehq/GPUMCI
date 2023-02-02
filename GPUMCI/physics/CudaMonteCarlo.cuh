@@ -2,20 +2,19 @@
 #include <curand_kernel.h>
 #include <texture_fetch_functions.h>
 
-
 #include <iostream>
 
 #include <GPUMCI/physics/CudaSettings.h>
+#include <cuda_profiler_api.h>
 #include <odl_cpp_utils/cuda/cutil_math.h>
 #include <odl_cpp_utils/cuda/errcheck.h>
-#include <cuda_profiler_api.h>
 
 namespace gpumci {
 namespace cuda {
 namespace {
 /**
-* Device Functions
-*/
+ * Device Functions
+ */
 
 //  Polls the geometry to find out in which voxel (indices) the particle at position 'pos' is.
 //  Results returned through the parameters
@@ -50,34 +49,34 @@ monteCarloKernel(const cudaTextureObject_t texDensityVolume,
     if (idx >= numThreads)
         return;
 
-    //Initialize the photon generator
+    // Initialize the photon generator
     __shared__ typename PhotonGenerator::SharedData sharedData;
     photonGenerator.init(idx, sharedData, c_param);
 
-    //Initialize the RNG
+    // Initialize the RNG
     rng.init(idx);
 
-    //Pre define some variables for efficiency and readability
+    // Pre define some variables for efficiency and readability
     float3 ivoxel;
     uint8_t myMedium;
     float myDensity;
 
-    //Empty particle
+    // Empty particle
     Particle myPhoton;
 
     //[Main Loop]
-    while (photonGenerator.generatePhoton(myPhoton, idx, rng, sharedData, c_param)) { //Loop while we still have particles to generate
+    while (photonGenerator.generatePhoton(myPhoton, idx, rng, sharedData, c_param)) { // Loop while we still have particles to generate
         int step = 0;
 
-        while (myPhoton.energy >= 0.001 && ++step < 5000) { //c_param.photon_energy_cutoff && ++step < 50) {
+        while (myPhoton.energy >= 0.001 && ++step < 5000) { // c_param.photon_energy_cutoff && ++step < 50) {
             // Look up the Woodcock mean free path for the current photon energy in the current local geometry.
             float meanFreePathCM, stepCM;
             stepLength(myPhoton, meanFreePathCM, stepCM, rng);
 
-            //Advance the particle
+            // Advance the particle
             myPhoton.position += (stepCM * 10.0f) * myPhoton.direction;
 
-            //Verify that it is still within the geometric bounds.
+            // Verify that it is still within the geometric bounds.
             if (particleOutOfBounds(myPhoton.position, c_param.volumeMin, c_param.volumeMax))
                 break;
 
@@ -100,7 +99,7 @@ monteCarloKernel(const cudaTextureObject_t texDensityVolume,
     rng.saveState(idx);
 }
 
-} // runmc_private
+} // namespace
 
 /**
  * RunMC, runs the montecarlo engine with given parameters
@@ -113,14 +112,14 @@ monteCarloKernel(const cudaTextureObject_t texDensityVolume,
  *   c_param                Simulation parameters
  *   numberOfThreads        The number of threads that should be used
  *   photonGen              Photon generator
- *   scorer                 Detector object 
+ *   scorer                 Detector object
  *   stepLength             Object for selecting the step length
  *   rng                    Random number generator
  *
  */
 template <typename InteractionHandler, typename PhotonGenerator, typename Scorer, typename StepLength, typename Rng>
-void RunMC(const cudaTextureObject_t& densityVolume,      //3D float
-           const cudaTextureObject_t& materialTypeVolume, //3D uint8_t
+void RunMC(const cudaTextureObject_t& densityVolume,      // 3D float
+           const cudaTextureObject_t& materialTypeVolume, // 3D uint8_t
            const CudaParameters& c_param,
            const unsigned numberOfThreads,
            InteractionHandler interaction,
@@ -128,7 +127,7 @@ void RunMC(const cudaTextureObject_t& densityVolume,      //3D float
            Scorer scorer,
            StepLength stepLength,
            Rng rng) {
-    //Calculate maximum occupancy settings
+    // Calculate maximum occupancy settings
     int blockSize;   // The launch configurator returned block size
     int minGridSize; // The minimum grid size needed to achieve the
                      // maximum occupancy for a full device launch
@@ -137,23 +136,23 @@ void RunMC(const cudaTextureObject_t& densityVolume,      //3D float
     CUDA_SAFE_CALL(cudaOccupancyMaxPotentialBlockSize(&minGridSize,
                                                       &blockSize,
                                                       monteCarloKernel<PhotonGenerator, InteractionHandler, Scorer, StepLength, Rng>,
-                                                      0, //no dynamic shared memory use
+                                                      0, // no dynamic shared memory use
                                                       numberOfThreads));
     // Round up according to array size
     gridSize = (numberOfThreads + blockSize - 1) / blockSize;
     // Launch the kernel
     cudaProfilerStart();
-    monteCarloKernel << <gridSize, blockSize>>> (densityVolume,
-                                                 materialTypeVolume,
-                                                 c_param,
-                                                 numberOfThreads,
-                                                 interaction,
-                                                 photonGen,
-                                                 scorer,
-                                                 stepLength,
-                                                 rng);
+    monteCarloKernel<<<gridSize, blockSize>>>(densityVolume,
+                                              materialTypeVolume,
+                                              c_param,
+                                              numberOfThreads,
+                                              interaction,
+                                              photonGen,
+                                              scorer,
+                                              stepLength,
+                                              rng);
     cudaProfilerStop();
     CUDA_KERNEL_ERRCHECK;
 };
-}
-}
+} // namespace cuda
+} // namespace gpumci
