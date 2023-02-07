@@ -34,10 +34,11 @@ cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
 source_group ("CUDA Source Files" FILES ${CudaFiles})
 
-CUDA_ADD_LIBRARY(implementations STATIC 
+add_library(implementations STATIC 
 	${Headers} 
 	${Sources} 
 	${CudaFiles}
 )
 
+set_target_properties(implementations PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(implementations physics rng)

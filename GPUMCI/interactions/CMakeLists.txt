@@ -22,8 +22,10 @@ cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
 source_group ("CUDA Source Files" FILES ${CudaFiles})
 
-CUDA_ADD_LIBRARY(interactions STATIC 
+add_library(interactions STATIC 
 	${Headers} 
 	${Sources} 
 	${CudaFiles}
 )
+
+set_target_properties(interactions PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

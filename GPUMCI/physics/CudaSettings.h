@@ -26,22 +26,15 @@ struct CudaMonteCarloParticle {
                            const Eigen::Vector3d& direction_,
                            double energy,
                            double weight,
-                           int    data
-                          )
-    : position(make_float3(position_)),
-    direction(make_float3(direction_)),
-    energy(static_cast<float>(energy)),
-    weight(static_cast<float>(weight)),
-    data(data){
+                           int data)
+        : data(data),
+          position(make_float3(position_)),
+          direction(make_float3(direction_)),
+          energy(static_cast<float>(energy)),
+          weight(static_cast<float>(weight)) {
         assert(energy >= 0.0f);
         assert(norm(direction) > 0.999f);
         assert(norm(direction) < 1.001f);
-    }
-    
-
-    void setPosition(const Eigen::Vector3f& position_)
-    {
-      position = make_float3(position_);
     }
 
     void
@@ -57,7 +50,7 @@ struct CudaMonteCarloParticle {
     float3 direction;
     float energy;
     float weight;
-    int   data;
+    int data;
 };
 
 struct CudaMonteCarloScatterParticle : CudaMonteCarloParticle {

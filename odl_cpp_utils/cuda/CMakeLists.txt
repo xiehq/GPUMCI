@@ -19,9 +19,11 @@ set(CudaFiles
 include_directories ("${PROJECT_SOURCE_DIR}")
 cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
-CUDA_ADD_LIBRARY(odlcpputils_cuda STATIC
-	${Headers}
+add_library(odlcpputils_cuda STATIC
+	    ${Headers}
     ${Sources}
-    ${CudaFiles})
+    ${CudaFiles}
+    )
 
+set_target_properties(odlcpputils_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_property(TARGET odlcpputils_cuda PROPERTY FOLDER odl_cpp_utils)
