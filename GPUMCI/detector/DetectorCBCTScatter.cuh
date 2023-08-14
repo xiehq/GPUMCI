@@ -1,8 +1,8 @@
 #pragma once
 
-#include <odl_cpp_utils/cuda/cutil_math.h>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
+#include <odl_cpp_utils/cuda/cutil_math.h>
 
 namespace gpumci {
 namespace cuda {
@@ -30,15 +30,15 @@ struct DetectorCBCTScatter {
     //  Scores the particle on the detector
     template <typename Particle>
     __device__ void scoreDetector(const Particle& myPhoton) {
-        if (myPhoton.weight <= 0.0f || //Irrelvant
-            myPhoton.energy == 0.0f)   //To low energy
+        if (myPhoton.weight <= 0.0f || // Irrelvant
+            myPhoton.energy == 0.0f)   // To low energy
             return;
 
         float3 direction = normalize(myPhoton.direction);
 
         const float dir_dot = dot(direction, _detectorNormal);
 
-        if (dir_dot <= 0.0 || dir_dot >= 2.0) //Traveling wrong way or some error clearly occurred
+        if (dir_dot <= 0.0 || dir_dot >= 2.0) // Traveling wrong way or some error clearly occurred
             return;
 
         const float distance = dot(_detectorOrigin - myPhoton.position, _detectorNormal);
@@ -50,16 +50,18 @@ struct DetectorCBCTScatter {
 
         const int i = __float2int_rd(dot(pos - _detectorOrigin, _detectorVectorU) * _inversePixelSize.x);
         const int j = __float2int_rd(dot(pos - _detectorOrigin, _detectorVectorV) * _inversePixelSize.y);
-        if (i < 0 || j < 0 || i >= _detectorSize.x || j >= _detectorSize.y) return; //Photon out of bounds
+        if (i < 0 || j < 0 || i >= _detectorSize.x || j >= _detectorSize.y) return; // Photon out of bounds
 
-        //Calculate response function
+        // Calculate response function
         const float E = myPhoton.energy;
         const float energy_response = E; //* (1.0f - expf(-(E / 0.035f) * (E / 0.035f))) * expf(-E / 0.053f); //f0.03f + myPhoton.energy;
         const float data = myPhoton.weight * energy_response / dir_dot;
 
-        //First assign pointer for better parallelism.
+        // First assign pointer for better parallelism.
         const unsigned index = j * _pitch + i;
-
+        // If the boolean expression "myPhoton.primary" is true, the pointer "pointer" will be set \\
+        to the address of the element at index "index" of the "_primaryResult" array. If the expression \\
+        is false, "pointer" will be set to the address of the element at index "index" of the "_secondaryResult" array.
         float* const pointer = myPhoton.primary ? &_primaryResult[index] : &_secondaryResult[index];
 
         atomicAdd(pointer, data);
@@ -76,5 +78,5 @@ struct DetectorCBCTScatter {
     float* const _primaryResult;
     float* const _secondaryResult;
 };
-}
-}
+} // namespace cuda
+} // namespace gpumci

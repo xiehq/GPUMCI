@@ -29,16 +29,17 @@ set(CudaFiles
     SpectMC.cu
     PhaseSpaceStorePhotonsMC.cu)
 
+
 include_directories ("${PROJECT_SOURCE_DIR}")
 cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
 source_group ("CUDA Source Files" FILES ${CudaFiles})
 
-add_library(implementations STATIC 
+cuda_add_library(implementations STATIC 
 	${Headers} 
 	${Sources} 
 	${CudaFiles}
 )
-
 set_target_properties(implementations PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(implementations PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 target_link_libraries(implementations physics rng)

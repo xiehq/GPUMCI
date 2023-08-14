@@ -16,16 +16,10 @@ cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
 source_group ("CUDA Source Files" FILES ${CudaFiles})
 
-#CUDA_ADD_LIBRARY(detector STATIC
-#	${Headers} 
-#	${Sources} 
-#	${CudaFiles}
-#)
-
-add_library(detector STATIC 
+cuda_add_library(detector STATIC 
 	${Headers} 
 	${Sources} 
 	${CudaFiles}
 )
 
-set_taget_properties(detector PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(detector PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

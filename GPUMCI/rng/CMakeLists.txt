@@ -14,7 +14,7 @@ cuda_include_directories ("${PROJECT_SOURCE_DIR}")
 
 source_group ("CUDA Source Files" FILES ${CudaFiles})
 
-add_library(rng STATIC 
+cuda_add_library(rng STATIC 
 	${Headers} 
 	${Sources} 
 	${CudaFiles}

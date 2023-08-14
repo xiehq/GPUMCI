@@ -1,16 +1,16 @@
 #pragma once
 
-#include <memory>
-#include <vector>
 #include <Eigen/Core>
-#include <stdint.h>
+#include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
 #include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/physics/MaterialEntry.h>
-#include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
+#include <memory>
+#include <stdint.h>
+#include <vector>
 
 namespace gpumci {
 namespace cuda {
-    struct PhaseSpaceStorePhotonsMCCuData;
+struct PhaseSpaceStorePhotonsMCCuData;
 }
 
 /*
@@ -33,12 +33,14 @@ class PhaseSpaceStorePhotonsMC {
      *   comptonTables  Precomputed compton interaction angles
      *
      */
-      PhaseSpaceStorePhotonsMC(const Eigen::Vector3i& volumeSize,
-                               const Eigen::Vector3d& volumeOrigin,
-                               const Eigen::Vector3d& voxelSize,
-                               const MaterialData& materials,
-                               const InteractionTables& rayleighTables,
-                               const InteractionTables& comptonTables);
+    PhaseSpaceStorePhotonsMC(const Eigen::Vector3i& volumeSize,
+                             const Eigen::Vector3d& volumeOrigin,
+                             const Eigen::Vector3d& voxelSize,
+                             const MaterialData& materials,
+                             const InteractionTables& rayleighTables,
+                             const InteractionTables& comptonTables);
+
+    void setData(const std::vector<float>& densityHost, const std::vector<uint8_t>& materialTypeHost);
 
     /*
      * Update the volume data used by the forward projector
@@ -65,4 +67,4 @@ class PhaseSpaceStorePhotonsMC {
     cuda::CudaParameters _param;
     std::shared_ptr<cuda::PhaseSpaceStorePhotonsMCCuData> _cudaData;
 };
-}
+} // namespace gpumci

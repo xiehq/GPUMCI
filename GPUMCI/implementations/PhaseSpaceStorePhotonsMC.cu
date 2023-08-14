@@ -1,33 +1,33 @@
+#include <algorithm>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
-#include <memory>
 #include <iostream>
-#include <algorithm>
+#include <memory>
 
 #include <odl_cpp_utils/cuda/disableThrustWarnings.h>
-#include <thrust/device_vector.h>
 #include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <thrust/device_vector.h>
 
 #include <GPUMCI/implementations/PhaseSpaceStorePhotonsMC.h>
 
-#include <GPUMCI/physics/MaterialEntry.h>
-#include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/implementations/MaterialUtils.cuh>
+#include <GPUMCI/physics/CudaSettings.h>
+#include <GPUMCI/physics/MaterialEntry.h>
 
-//CudaMonteCarlo parts
+// CudaMonteCarlo parts
 #include <GPUMCI/detector/DetectorStorePhoton.cuh>
-#include <GPUMCI/photongenerator/PhotonGeneratorPhaseSpace.cuh>
-#include <GPUMCI/rng/CurandRng.cuh>
-#include <GPUMCI/interactions/PhotonPhoto.cuh>
-#include <GPUMCI/interactions/InteractionHandlerPhoton.cuh>
 #include <GPUMCI/interactions/ComptonPrecomputed.cuh>
+#include <GPUMCI/interactions/InteractionHandlerPhoton.cuh>
+#include <GPUMCI/interactions/PhotonPhoto.cuh>
 #include <GPUMCI/interactions/RayleighPrecomputed.cuh>
 #include <GPUMCI/interactions/WoodcockStep.cuh>
+#include <GPUMCI/photongenerator/PhotonGeneratorPhaseSpace.cuh>
+#include <GPUMCI/rng/CurandRng.cuh>
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <odl_cpp_utils/utils/cast.h>
 #include <odl_cpp_utils/cuda/texture.h>
+#include <odl_cpp_utils/utils/cast.h>
 
 namespace gpumci {
 namespace cuda {
@@ -35,9 +35,9 @@ namespace {
 unsigned nThreads() {
     return 100000;
 }
-}
+} // namespace
 
-//Struct that holds all data needed for the cuda MC simulation
+// Struct that holds all data needed for the cuda MC simulation
 struct PhaseSpaceStorePhotonsMCCuData {
     PhaseSpaceStorePhotonsMCCuData(const int3 volumeSize,
                                    const MaterialData& attenuationData_,
@@ -58,7 +58,7 @@ struct PhaseSpaceStorePhotonsMCCuData {
         int n_energy = narrow_cast<int>(attenuationData.n_energies);
         int n_materials = narrow_cast<int>(attenuationData.n_materials);
 
-        //Interaction
+        // Interaction
         thrust::device_vector<float4> data = util::make_material_device(attenuationData);
         texMaterial = std::make_shared<BoundTexture2D<float4>>(int2{n_energy, n_materials},
                                                                cudaAddressModeClamp,
@@ -67,7 +67,7 @@ struct PhaseSpaceStorePhotonsMCCuData {
         texMaterial->setData(thrust::raw_pointer_cast(&data[0]));
     }
 
-    //Nocopy
+    // Nocopy
     PhaseSpaceStorePhotonsMCCuData(const PhaseSpaceStorePhotonsMCCuData&) = delete;
     PhaseSpaceStorePhotonsMCCuData& operator=(const PhaseSpaceStorePhotonsMCCuData&) = delete;
 
@@ -80,7 +80,7 @@ struct PhaseSpaceStorePhotonsMCCuData {
     const ComptonPrecomputed compton;
     curandRng rng;
 };
-}
+} // namespace cuda
 
 PhaseSpaceStorePhotonsMC::PhaseSpaceStorePhotonsMC(const Eigen::Vector3i& volumeSize,
                                                    const Eigen::Vector3d& volumeOrigin,
@@ -98,11 +98,11 @@ PhaseSpaceStorePhotonsMC::PhaseSpaceStorePhotonsMC(const Eigen::Vector3i& volume
 
 void PhaseSpaceStorePhotonsMC::setData(const float* densityDevice,
                                        const uint8_t* materialTypeDevice) {
-    //Set the density and materials
+    // Set the density and materials
     _cudaData->densityVolume->setData(densityDevice);
     _cudaData->materialTypeVolume->setData(materialTypeDevice);
 
-    //Since the densities have updated, we need to update the woodcock table
+    // Since the densities have updated, we need to update the woodcock table
     int n_energy = narrow_cast<int>(_cudaData->attenuationData.n_energies);
     _cudaData->woodcockStep = std::make_shared<cuda::WoodcockStep>(densityDevice,
                                                                    materialTypeDevice,
@@ -111,6 +111,16 @@ void PhaseSpaceStorePhotonsMC::setData(const float* densityDevice,
                                                                    _param.invEnergyStep,
                                                                    _cudaData->attenuationData);
 }
+
+/**/
+void PhaseSpaceStorePhotonsMC::setData(const std::vector<float>& densityHost,
+                           const std::vector<uint8_t>& materialHost) {
+    thrust::device_vector<float> dDevice(densityHost);
+    thrust::device_vector<uint8_t> mDevice(materialHost);
+    setData(thrust::raw_pointer_cast(&dDevice[0]), thrust::raw_pointer_cast(&mDevice[0]));
+}
+/**/
+
 void PhaseSpaceStorePhotonsMC::project(const std::vector<cuda::CudaMonteCarloParticle>& particles_in,
                                        std::vector<cuda::CudaMonteCarloParticle>& particles_out) const {
     // Setup kernel configuration
@@ -124,10 +134,10 @@ void PhaseSpaceStorePhotonsMC::project(const std::vector<cuda::CudaMonteCarloPar
     cuda::DetectorStorePhotons<cuda::CudaMonteCarloParticle> detector{narrow_cast<unsigned>(particles_in.size()),
                                                                       numberOfThreads};
 
-    //Use a phase space photon generator
-    cuda::PhotonGeneratorPhaseSpace photonGenerator{ particles_in, 1, numberOfThreads };
+    // Use a phase space photon generator
+    cuda::PhotonGeneratorPhaseSpace photonGenerator{particles_in, 1, numberOfThreads};
 
-    //Simple interaction handler
+    // Simple interaction handler
     auto interaction = cuda::makePhotonInteractionHandler(_cudaData->compton.deviceSide(),
                                                           _cudaData->rayleigh.deviceSide(),
                                                           cuda::PhotonPhoto{},
@@ -146,4 +156,4 @@ void PhaseSpaceStorePhotonsMC::project(const std::vector<cuda::CudaMonteCarloPar
     // Copy the results back to host side
     detector.copy_to_host(particles_out);
 }
-}
+} // namespace gpumci
