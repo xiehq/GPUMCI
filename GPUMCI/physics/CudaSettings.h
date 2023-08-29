@@ -37,6 +37,25 @@ struct CudaMonteCarloParticle {
         assert(norm(direction) < 1.001f);
     }
 
+    /*CudaMonteCarloParticle(const Eigen::Vector3d& position_,
+                           const Eigen::Vector3d& direction_,
+                           double energy,
+                           double weight,
+                           bool backscattered_,
+                           bool offfocal_,
+                           bool tubescattered_)
+        : position(make_float3(position_)),
+          direction(make_float3(direction_)),
+          energy(static_cast<float>(energy)),
+          weight(static_cast<float>(weight)),
+          backscattered(backscattered_),
+          offfocal(offfocal_),
+          tubescattered(tubescattered_) {
+        assert(energy >= 0.0f);
+        assert(norm(direction) > 0.999f);
+        assert(norm(direction) < 1.001f);
+    }/**/
+
     void
     setPosition(const Eigen::Vector3f& position_) {
         position = make_float3(position_);
@@ -46,11 +65,39 @@ struct CudaMonteCarloParticle {
         direction = make_float3(direction_);
     }
 
+  public:
+    static int GetBits(int value, int offset, int count) {
+        return (value >> offset) & ((1 << count) - 1);
+    }
+
+    __host__ __device__ bool isBackscattered() const {
+        return GetBits(data, 9, 1) != 0;
+    }
+
+    __host__ __device__ bool isoffocal() const {
+        return GetBits(data, 11, 1) != 0;
+    }
+
+    __host__ __device__ bool isTubescattered() const {
+        return GetBits(data, 12, 1) != 0;
+    }
+
+    __host__ __device__ bool isTertiary() const {
+        return GetBits(data, 9, 1) != 0 || GetBits(data, 11, 1) != 0 || GetBits(data, 12, 1) != 0;
+    }
+
+    /*__host__ __device__ bool isTertiary() const {
+        return (backscattered || offfocal || tubescattered);
+    }/**/
+
     float3 position;
     float3 direction;
     float energy;
     float weight;
     int data;
+    /*bool backscattered;
+    bool offfocal;
+    bool tubescattered;/**/
 };
 
 struct CudaMonteCarloScatterParticle : CudaMonteCarloParticle {
@@ -66,7 +113,6 @@ struct CudaMonteCarloScatterParticle : CudaMonteCarloParticle {
                                  energy,
                                  weight),
           primary(primary) {}
-        
 
     __device__ CudaMonteCarloScatterParticle& operator=(const CudaMonteCarloParticle& other) {
         CudaMonteCarloParticle::operator=(other);
@@ -80,7 +126,7 @@ struct CudaMonteCarloScatterParticle : CudaMonteCarloParticle {
         return *this;
     }
 
-    int  data;
+    // int data;
     bool primary;
 };
 

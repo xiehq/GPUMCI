@@ -105,6 +105,15 @@ class PhaseSpaceMC {
                  float* primary,
                  float* scatter) const;
 
+    void project(const Eigen::Vector3d& sourcePosition,
+                 const Eigen::Vector3d& detectorOrigin,
+                 const Eigen::Vector3d& pixelDirectionU,
+                 const Eigen::Vector3d& pixelDirectionV,
+                 const std::vector<cuda::CudaMonteCarloParticle>& particles,
+                 float* primary,
+                 float* scatter,
+                 float* secondary) const; // Additional parameter for secondary photons
+
   private:
     cuda::CudaParameters _param;
     const Eigen::Vector2i _detectorSize;

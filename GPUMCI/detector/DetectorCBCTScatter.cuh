@@ -3,6 +3,7 @@
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <odl_cpp_utils/cuda/cutil_math.h>
+#include <stdio.h>
 
 namespace gpumci {
 namespace cuda {
@@ -24,7 +25,30 @@ struct DetectorCBCTScatter {
           _detectorSize(detectorSize),
           _pitch(pitch),
           _primaryResult(primaryDetector),
-          _secondaryResult(secondaryDetector) {
+          _secondaryResult(secondaryDetector),
+          _tertiaryResult(nullptr) { // Default value
+    }
+
+    // Overloaded constructor with an additional parameter for secondary photons
+    __host__ DetectorCBCTScatter(float3 detectorOrigin,
+                                 float3 detectorVectorU,
+                                 float3 detectorVectorV,
+                                 float2 inversePixelSize,
+                                 int2 detectorSize,
+                                 unsigned pitch,
+                                 float* const primaryDetector,
+                                 float* const secondaryDetector,
+                                 float* const tertiaryDetector) // New parameter
+        : _detectorOrigin(detectorOrigin),
+          _detectorNormal(normalize(cross(detectorVectorU, detectorVectorV))),
+          _detectorVectorU(normalize(detectorVectorU)),
+          _detectorVectorV(normalize(detectorVectorV)),
+          _inversePixelSize(inversePixelSize),
+          _detectorSize(detectorSize),
+          _pitch(pitch),
+          _primaryResult(primaryDetector),
+          _secondaryResult(secondaryDetector),
+          _tertiaryResult(tertiaryDetector) { // New member
     }
 
     //  Scores the particle on the detector
@@ -62,7 +86,19 @@ struct DetectorCBCTScatter {
         // If the boolean expression "myPhoton.primary" is true, the pointer "pointer" will be set \\
         to the address of the element at index "index" of the "_primaryResult" array. If the expression \\
         is false, "pointer" will be set to the address of the element at index "index" of the "_secondaryResult" array.
-        float* const pointer = myPhoton.primary ? &_primaryResult[index] : &_secondaryResult[index];
+        /*if (myPhoton.isTertiary(myPhoton.data)) {
+            printf("Yes Tertiary.\n");
+        } else {
+            printf("Not Tertiary.\n");
+        }/**/
+        float* pointer;
+        if (myPhoton.isTertiary()) {
+            pointer = &_tertiaryResult[index];
+        } else if (myPhoton.primary) {
+            pointer = &_primaryResult[index];
+        } else {
+            pointer = &_secondaryResult[index];
+        }
 
         atomicAdd(pointer, data);
     }
@@ -77,6 +113,7 @@ struct DetectorCBCTScatter {
     const unsigned int _pitch;
     float* const _primaryResult;
     float* const _secondaryResult;
+    float* const _tertiaryResult; // New member
 };
 } // namespace cuda
 } // namespace gpumci
