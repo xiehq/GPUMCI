@@ -71,6 +71,8 @@ class PhaseSpaceMC {
                  const InteractionTables& rayleighTables,
                  const InteractionTables& comptonTables);
 
+    // void rotateParticles(std::vector<cuda::CudaMonteCarloParticle>& particles, float3& axis, float angle);
+
     void setData(const std::vector<float>& densityHost, const std::vector<uint8_t>& materialTypeHost);
 
     /*

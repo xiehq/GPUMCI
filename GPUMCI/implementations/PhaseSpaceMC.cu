@@ -3,6 +3,7 @@
 #include <curand_kernel.h>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 #include <odl_cpp_utils/cuda/disableThrustWarnings.h>
 #include <odl_cpp_utils/cuda/enableThrustWarnings.h>
@@ -26,6 +27,7 @@
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
+#include <odl_cpp_utils/cuda/CudaQuaternion.h>
 #include <odl_cpp_utils/cuda/texture.h>
 #include <odl_cpp_utils/utils/cast.h>
 
@@ -129,6 +131,25 @@ PhaseSpaceMC::PhaseSpaceMC(const Eigen::Vector3i& volumeSize,
                                                            rayleighTables,
                                                            comptonTables);
 }
+
+/*void rotateParticles(std::vector<cuda::CudaMonteCarloParticle>& particles, float3& axis, float angle) {
+    cuda::CudaMonteCarloParticle* d_particles;
+    size_t numParticles = particles.size();
+
+    cudaMalloc(&d_particles, numParticles * sizeof(cuda::CudaMonteCarloParticle));
+    cudaMemcpy(d_particles, particles.data(), numParticles * sizeof(cuda::CudaMonteCarloParticle), cudaMemcpyHostToDevice);
+
+    // Set block and grid sizes
+    int blockSize = 256; // This could be optimized based on the architecture
+    int gridSize = (numParticles + blockSize - 1) / blockSize;
+
+    // Quaternion::
+    cudaRotationKernel<<<gridSize, blockSize>>>(d_particles, numParticles, angle, axis);
+
+    cudaMemcpy(particles.data(), d_particles, numParticles * sizeof(cuda::CudaMonteCarloParticle), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_particles);
+}/**/
 
 void PhaseSpaceMC::setData(const float* densityDevice,
                            const uint8_t* materialTypeDevice) {
