@@ -3,8 +3,9 @@
 #include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
 
 #include <odl_cpp_utils/cuda/disableThrustWarnings.h>
-#include <thrust/device_vector.h>
 #include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
 
 namespace gpumci {
 namespace cuda {
@@ -23,8 +24,8 @@ inline thrust::device_vector<float> make_interaction_device(const InteractionTab
             }
         }
     }
-    return {host_data}; //copies result to device
+    return {host_data}; // copies result to device
 }
-}
-}
-}
+} // namespace util
+} // namespace cuda
+} // namespace gpumci

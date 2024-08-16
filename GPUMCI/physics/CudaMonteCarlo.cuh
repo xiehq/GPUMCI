@@ -88,11 +88,15 @@ monteCarloKernel(const cudaTextureObject_t texDensityVolume,
             myMedium = tex3D<uint8_t>(texMaterialVolume, ivoxel.x, ivoxel.y, ivoxel.z);
 
             // Simulate interaction
+            // printf("Hello from the CudaMonteCarlo line 91!\n");
             interaction.simulateInteraction(meanFreePathCM, stepCM, myMedium, myDensity, myPhoton, rng, c_param);
+            // printf("Hello from the CudaMonteCarlo line 93!\n");
         }
 
         // Score the particle
+        // printf("Hello from the CudaMonteCarlo line 96!\n");
         scorer.scoreDetector(myPhoton);
+
     } // End : [Main Loop]
 
     // Save the state of the random number generator.
@@ -138,8 +142,10 @@ void RunMC(const cudaTextureObject_t& densityVolume,      // 3D float
                                                       monteCarloKernel<PhotonGenerator, InteractionHandler, Scorer, StepLength, Rng>,
                                                       0, // no dynamic shared memory use
                                                       numberOfThreads));
+
     // Round up according to array size
     gridSize = (numberOfThreads + blockSize - 1) / blockSize;
+
     // Launch the kernel
     cudaProfilerStart();
     monteCarloKernel<<<gridSize, blockSize>>>(densityVolume,
@@ -152,6 +158,7 @@ void RunMC(const cudaTextureObject_t& densityVolume,      // 3D float
                                               stepLength,
                                               rng);
     cudaProfilerStop();
+    // printf("Hello from the CudaMonteCarlo line 161!\n");
     CUDA_KERNEL_ERRCHECK;
 };
 } // namespace cuda

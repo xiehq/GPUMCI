@@ -46,6 +46,8 @@ struct DoseDetector {
 
         float energy_diff = energy_0 - photon.energy;
 
+        // printf("Volume Received Dose: %f\n", photon.weight * energy_diff);
+
         if (energy_diff > 0.0f) {
             int3 ivoxel = getIndicesVoxel(photon.position);
             if (ivoxel.x >= _volumeSize.x ||
@@ -55,8 +57,39 @@ struct DoseDetector {
 
             unsigned index = ivoxel.x + ivoxel.y * _volumeSize.x + ivoxel.z * _volumeSize.x * _volumeSize.y;
 
+            // size_t allocated_size = _volumeSize.x * _volumeSize.y * _volumeSize.z;
+
+            // if (index < allocated_size) {
+            //     printf("Index %u within bounds (allocated size: %lu)\n", index, allocated_size);
+            // } else {
+            //     printf("Error: Index %u out of bounds (allocated size: %lu)\n", index, allocated_size);
+            // }
+
+            // Print the index and the dose amount being added - for debugging
+            // printf("Before Adding: Index: %u, Current Dose: %f\n", index, _dose_volume[index]);
+            // printf("Adding dose: %f to index: %u\n", photon.weight * energy_diff, index);
             atomicAdd(&_dose_volume[index], photon.weight * energy_diff);
+            // printf("After Adding: Index: %u, New Dose: %f\n", index, _dose_volume[index]);
+            // printf("Done Adding:\n");
         }
+
+        // if (energy_diff > 0.0f) {
+        //     int3 ivoxel = getIndicesVoxel(photon.position);
+        //     if (ivoxel.x >= _volumeSize.x ||
+        //         ivoxel.y >= _volumeSize.y ||
+        //         ivoxel.z >= _volumeSize.z)
+        //         return;
+
+        //     unsigned index = ivoxel.x + ivoxel.y * _volumeSize.x + ivoxel.z * _volumeSize.x * _volumeSize.y;
+
+        //     printf("Before Adding: Index: %u, Current Dose: %f\n", index, _dose_volume[index]);
+        //     printf("Adding dose: %f to index: %u\n", photon.weight * energy_diff, index);
+
+        //     atomicAdd(&_dose_volume[index], photon.weight * energy_diff);
+
+        //     printf("After Adding: Index: %u, New Dose: %f\n", index, _dose_volume[index]);
+        //     printf("Done Adding!\n");
+        // }
     }
 
   private:
@@ -72,5 +105,5 @@ struct DoseDetector {
     float* const _dose_volume;
     const InteractionHandler _interactionHandler;
 };
-}
-}
+} // namespace cuda
+} // namespace gpumci

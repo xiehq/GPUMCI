@@ -1,7 +1,7 @@
 #pragma once
 
-#include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/interactions/InteractionTypes.h>
+#include <GPUMCI/physics/CudaSettings.h>
 #include <LCRUtils/cuda/cutil_math.h>
 
 #include <cuda_runtime.h>
@@ -77,7 +77,7 @@ rotateDirectionVector(float3& direction, float costheta, Rng& rng) {
 
     direction = normalize(direction);
 }
-}
+} // namespace
 
 /**
  * Struct which handles interactions according to pre-selected
@@ -85,12 +85,12 @@ rotateDirectionVector(float3& direction, float costheta, Rng& rng) {
  */
 template <typename Compton, typename Rayleigh, typename Photo>
 struct InteractionHandlerPhotonNonVectorized {
-    __host__ InteractionHandlerPhotonNonVectorized(const Compton &compton,
-                                                   const Rayleigh &rayleigh,
-                                                   const Photo &photo,
-                                                   const cudaTextureObject_t &texCompton,
-                                                   const cudaTextureObject_t &texRayleigh,
-                                                   const cudaTextureObject_t &texPhoto) // texture<float4,cudaTextureType2D,cudaReadModeElementType>
+    __host__ InteractionHandlerPhotonNonVectorized(const Compton& compton,
+                                                   const Rayleigh& rayleigh,
+                                                   const Photo& photo,
+                                                   const cudaTextureObject_t& texCompton,
+                                                   const cudaTextureObject_t& texRayleigh,
+                                                   const cudaTextureObject_t& texPhoto) // texture<float4,cudaTextureType2D,cudaReadModeElementType>
         : _compton(compton),
           _rayleigh(rayleigh),
           _photo(photo),
@@ -197,5 +197,5 @@ makePhotonInteractionHandlerNonVectorized(const Compton& compton,
 {
     return {compton, rayleigh, photo, texCompton, texRayleigh, texPhoto};
 }
-}
-}
+} // namespace cuda
+} // namespace gpumci

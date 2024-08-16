@@ -1,8 +1,8 @@
 #pragma once
 
-#include <odl_cpp_utils/cuda/cutil_math.h>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
+#include <odl_cpp_utils/cuda/cutil_math.h>
 
 namespace gpumci {
 namespace cuda {
@@ -28,13 +28,14 @@ struct DetectorCBCT {
     //  Scores the particle on the detector
     template <typename Particle>
     __device__ void scoreDetector(const Particle& photon) {
-        if (photon.weight <= 0.0f || //Irrelvant
-            photon.energy == 0.0f)   //To low energy
+        printf("Hello from the DetectorCBCT!\n");
+        if (photon.weight <= 0.0f || // Irrelvant
+            photon.energy == 0.0f)   // To low energy
             return;
 
         const float dir_dot = dot(photon.direction, _detectorNormal);
 
-        if (dir_dot <= 0 || dir_dot >= 2.0) //Traveling wrong way or some error clearly occurred
+        if (dir_dot <= 0 || dir_dot >= 2.0) // Traveling wrong way or some error clearly occurred
             return;
 
         const float distance = dot(_detectorOrigin - photon.position, _detectorNormal);
@@ -44,17 +45,16 @@ struct DetectorCBCT {
         const int i = __float2int_rd(dot(pos - _detectorOrigin, _detectorVectorY) * _inversePixelSize.x);
         const int j = __float2int_rd(dot(pos - _detectorOrigin, _detectorVectorV) * _inversePixelSize.y);
 
-        //printf("%f %f %f %f %f %f %d %d\n",photon.position.x, photon.position.y, photon.position.z, pos.x, pos.y, pos.z, i,j);
+        // printf("%f %f %f %f %f %f %d %d\n",photon.position.x, photon.position.y, photon.position.z, pos.x, pos.y, pos.z, i,j);
 
         if (i < 0 || j < 0 || i >= _detectorSize.x || j >= _detectorSize.y)
-            return; //Photon out of bounds
+            return; // Photon out of bounds
 
-        //Calculate response function
+        // Calculate response function
         const float data = photon.weight * photon.energy / dir_dot;
 
-        //First assign pointer for better parallelism.
+        // First assign pointer for better parallelism.
         const unsigned index = j * _pitch + i;
-
         atomicAdd(&_detector[index], data);
     }
 
@@ -68,5 +68,5 @@ struct DetectorCBCT {
     const unsigned int _pitch;
     float* const _detector;
 };
-}
-}
+} // namespace cuda
+} // namespace gpumci

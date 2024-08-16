@@ -1,22 +1,27 @@
-#include <vector>
-#include <iostream>
 #include <cassert>
+#include <iostream>
+#include <vector>
 
-#include <float.h>
 #include <cstdio>
-#include <odl_cpp_utils/cuda/cutil_math.h>
+#include <float.h>
 #include <odl_cpp_utils/cuda/cuda_utils.h>
+#include <odl_cpp_utils/cuda/cutil_math.h>
 
 // includes CUDA Runtime
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
 // thrust
-#include <thrust/device_vector.h>
 #include <odl_cpp_utils/cuda/texture.h>
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
 
 namespace gpumci {
 namespace cuda {
+
+__device__ float uint2float(unsigned int x) {
+    return static_cast<float>(x);
+}
 
 __global__ void cosWeightingKernel(const float3 sourcePosition,
                                    const float3 detectorOrigin,
@@ -32,7 +37,7 @@ __global__ void cosWeightingKernel(const float3 sourcePosition,
         id.y >= detectorSize.y)
         return;
 
-    //Add 0.5 to center the pixels
+    // Add 0.5 to center the pixels
     const float3 pixelPosition = detectorOrigin + pixelDirectionU * (uint2float(id.x) + 0.5f) + pixelDirectionV * (uint2float(id.y) + 0.5f);
     const float3 direction = normalize(pixelPosition - sourcePosition);
 
@@ -40,7 +45,7 @@ __global__ void cosWeightingKernel(const float3 sourcePosition,
 
     target[id.x + id.y * detectorSize.x] = source[id.x + id.y * detectorSize.x] / dir_dot;
 }
-}
+} // namespace cuda
 
 void apply_cosweighting(const float3 sourcePosition,
                         const float3 detectorOrigin,
@@ -64,4 +69,4 @@ void apply_cosweighting(const float3 sourcePosition,
     gpuErrchk(cudaDeviceSynchronize());
 }
 
-} //gpumci
+} // namespace gpumci

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <vector>
 #include <Eigen/Core>
-#include <stdint.h>
+#include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
 #include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/physics/MaterialEntry.h>
-#include <GPUMCI/interactions/PrecomputedInteractionUtils.h>
+#include <memory>
+#include <stdint.h>
+#include <vector>
 
 namespace gpumci {
 namespace cuda {
@@ -51,6 +51,17 @@ class DoseMC {
      * All data should be given as CUDA pointers
      *
      */
+
+    void setData(const std::vector<float>& densityHost, const std::vector<uint8_t>& materialTypeHost);
+
+    /*
+     * Update the volume data used by the forward projector
+     *
+     * Volumes should be given in standard cuda ordering (Fortran/Column major)
+     *
+     * All data should be given as CUDA pointers
+     *
+     */
     void setData(const float* densityDevice,
                  const uint8_t* materialTypeDevice);
 
@@ -80,4 +91,4 @@ class DoseMC {
     const int _nRuns;
     std::shared_ptr<cuda::DoseMCCuData> _cudaData;
 };
-}
+} // namespace gpumci

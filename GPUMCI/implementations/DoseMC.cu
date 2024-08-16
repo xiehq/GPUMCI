@@ -1,35 +1,35 @@
+#include <algorithm>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
-#include <memory>
 #include <iostream>
-#include <algorithm>
+#include <memory>
 
 #include <odl_cpp_utils/cuda/disableThrustWarnings.h>
-#include <thrust/device_vector.h>
 #include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <thrust/device_vector.h>
 
 #include <GPUMCI/implementations/DoseMC.h>
 
-#include <GPUMCI/physics/MaterialEntry.h>
-#include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/implementations/MaterialUtils.cuh>
 #include <GPUMCI/implementations/WoodcockUtils.cuh>
+#include <GPUMCI/physics/CudaSettings.h>
+#include <GPUMCI/physics/MaterialEntry.h>
 
-//CudaMonteCarlo parts
+// CudaMonteCarlo parts
 #include <GPUMCI/detector/DetectorCBCTScatter.cuh>
 #include <GPUMCI/detector/DoseDetector.cuh>
-#include <GPUMCI/photongenerator/PhotonGeneratorUniform.cuh>
-#include <GPUMCI/rng/CurandRng.cuh>
-#include <GPUMCI/interactions/PhotonPhoto.cuh>
-#include <GPUMCI/interactions/InteractionHandlerPhoton.cuh>
 #include <GPUMCI/interactions/ComptonPrecomputed.cuh>
+#include <GPUMCI/interactions/InteractionHandlerPhoton.cuh>
+#include <GPUMCI/interactions/PhotonPhoto.cuh>
 #include <GPUMCI/interactions/RayleighPrecomputed.cuh>
 #include <GPUMCI/interactions/WoodcockStep.cuh>
+#include <GPUMCI/photongenerator/PhotonGeneratorUniform.cuh>
+#include <GPUMCI/rng/CurandRng.cuh>
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <odl_cpp_utils/utils/cast.h>
 #include <odl_cpp_utils/cuda/texture.h>
+#include <odl_cpp_utils/utils/cast.h>
 
 namespace gpumci {
 namespace cuda {
@@ -37,9 +37,9 @@ namespace {
 unsigned nThreads(int2 detectorSize) {
     return detectorSize.x * detectorSize.y;
 }
-}
+} // namespace
 
-//Struct that holds all data needed for the cuda MC simulation
+// Struct that holds all data needed for the cuda MC simulation
 struct DoseMCCuData {
     DoseMCCuData(const int3 volumeSize,
                  const int2 detectorSize_,
@@ -58,12 +58,12 @@ struct DoseMCCuData {
                                                                        cudaReadModeElementType)),
           rng(nThreads(detectorSize)),
           rayleigh(rayleighTables),
-          compton(comptonTables) { //detectorSize.x * detectorSize.y) {
+          compton(comptonTables) { // detectorSize.x * detectorSize.y) {
 
         int n_energy = narrow_cast<int>(attenuationData.n_energies);
         int n_materials = narrow_cast<int>(attenuationData.n_materials);
 
-        //Interaction
+        // Interaction
         thrust::device_vector<float4> data = util::make_material_device(attenuationData);
         texMaterial = std::make_shared<BoundTexture2D<float4>>(int2{n_energy, n_materials},
                                                                cudaAddressModeClamp,
@@ -72,7 +72,7 @@ struct DoseMCCuData {
         texMaterial->setData(thrust::raw_pointer_cast(&data[0]));
     }
 
-    //Nocopy
+    // Nocopy
     DoseMCCuData(const DoseMCCuData&) = delete;
     DoseMCCuData& operator=(const DoseMCCuData&) = delete;
 
@@ -86,7 +86,7 @@ struct DoseMCCuData {
     const ComptonPrecomputed compton;
     curandRng rng;
 };
-}
+} // namespace cuda
 DoseMC::DoseMC(const Eigen::Vector3i& volumeSize,
                const Eigen::Vector3d& volumeOrigin,
                const Eigen::Vector3d& voxelSize,
@@ -107,11 +107,11 @@ DoseMC::DoseMC(const Eigen::Vector3i& volumeSize,
 
 void DoseMC::setData(const float* densityDevice,
                      const uint8_t* materialTypeDevice) {
-    //Set the density and materials
+    // Set the density and materials
     _cudaData->densityVolume->setData(densityDevice);
     _cudaData->materialTypeVolume->setData(materialTypeDevice);
 
-    //Since the densities have updated, we need to update the woodcock table
+    // Since the densities have updated, we need to update the woodcock table
     int n_energy = narrow_cast<int>(_cudaData->attenuationData.n_energies);
     _cudaData->woodcockStep = std::make_shared<cuda::WoodcockStep>(densityDevice,
                                                                    materialTypeDevice,
@@ -119,6 +119,13 @@ void DoseMC::setData(const float* densityDevice,
                                                                    n_energy,
                                                                    _param.invEnergyStep,
                                                                    _cudaData->attenuationData);
+}
+
+void DoseMC::setData(const std::vector<float>& densityHost,
+                     const std::vector<uint8_t>& materialHost) {
+    thrust::device_vector<float> dDevice(densityHost);
+    thrust::device_vector<uint8_t> mDevice(materialHost);
+    setData(thrust::raw_pointer_cast(&dDevice[0]), thrust::raw_pointer_cast(&mDevice[0]));
 }
 
 void DoseMC::project(const Eigen::Vector3d& sourcePosition,
@@ -143,7 +150,7 @@ void DoseMC::project(const Eigen::Vector3d& sourcePosition,
                                        primary,
                                        scatter};
 
-    //Use a analytic photon generator
+    // Use a analytic photon generator
     cuda::PhotonGeneratorUniform photonGenerator{_cudaData->detectorSize,
                                                  make_float3(detectorOrigin),
                                                  make_float3(pixelDirectionU),
@@ -151,7 +158,7 @@ void DoseMC::project(const Eigen::Vector3d& sourcePosition,
                                                  make_float3(sourcePosition),
                                                  _nRuns};
 
-    //Simple interaction handler
+    // Simple interaction handler
     auto interaction = cuda::makePhotonInteractionHandler(_cudaData->compton.deviceSide(),
                                                           _cudaData->rayleigh.deviceSide(),
                                                           cuda::PhotonPhoto{},
@@ -173,4 +180,4 @@ void DoseMC::project(const Eigen::Vector3d& sourcePosition,
           _cudaData->woodcockStep->deviceSide(),
           _cudaData->rng.deviceSide());
 }
-}
+} // namespace gpumci

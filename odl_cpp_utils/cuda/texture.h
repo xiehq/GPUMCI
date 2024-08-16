@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iostream>
-#include <stdexcept>
 #include <cuda_runtime.h>
+#include <iostream>
 #include <odl_cpp_utils/cuda/errcheck.h>
+#include <stdexcept>
 
 template <typename T>
 struct BoundTexture1D {
@@ -44,8 +44,8 @@ struct BoundTexture1D {
     }
 
     void setData(const T* source) {
-        //CUDA_SAFE_CALL(cudaMemcpyToArray(_arr, 0, 0, source, size * sizeof(T), cudaMemcpyDeviceToDevice));
-        CUDA_SAFE_CALL(cudaMemcpy2DToArray(_arr, 0, 0, source, size * sizeof(T),  size * sizeof(T), 1, cudaMemcpyDeviceToDevice));
+        // CUDA_SAFE_CALL(cudaMemcpyToArray(_arr, 0, 0, source, size * sizeof(T), cudaMemcpyDeviceToDevice));
+        CUDA_SAFE_CALL(cudaMemcpy2DToArray(_arr, 0, 0, source, size * sizeof(T), size * sizeof(T), 1, cudaMemcpyDeviceToDevice));
         has_data = true;
     }
 
@@ -190,6 +190,7 @@ struct BoundTexture3D {
         copyParams.extent = extent;
         copyParams.kind = cudaMemcpyDeviceToDevice;
 
+        // printf("Doing CudaSafeCall from texture.h [Printing For Debugging] \n");
         CUDA_SAFE_CALL(cudaMemcpy3D(&copyParams));
         has_data = true;
     }

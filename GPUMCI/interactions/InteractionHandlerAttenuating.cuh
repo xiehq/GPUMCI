@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/interactions/InteractionTypes.h>
+#include <GPUMCI/physics/CudaSettings.h>
 
 #include <cuda_runtime.h>
 
@@ -16,24 +16,24 @@ namespace gpumci {
 namespace cuda {
 
 /**
-	* TODO
-	*/
+ * TODO
+ */
 struct InteractionHandlerAttenuating {
     __host__ InteractionHandlerAttenuating(const cudaTextureObject_t texMaterial)
         : _texMaterial(texMaterial) {}
 
     /**
-	* Simulates an interaction
-	*
-	* Parameters:
-	*		meanFreePathCM		The woodcock mean free path (in CM) at the energy of interaction
-    *		stepCM              Length of the step taken
-	*		myMedium			Index of the medium at the point of interaction
-	*		myDensity			Density (g/cm^3) at the point of interaction
-	*		ivoxel				Index of the interaction point
-	*		primary				Boolean (which will be written to) indicating if the photon is a primary (non-scattered photon)
-	*		rng					The random number generator to use.
-	*/
+     * Simulates an interaction
+     *
+     * Parameters:
+     *		meanFreePathCM		The woodcock mean free path (in CM) at the energy of interaction
+     *		stepCM              Length of the step taken
+     *		myMedium			Index of the medium at the point of interaction
+     *		myDensity			Density (g/cm^3) at the point of interaction
+     *		ivoxel				Index of the interaction point
+     *		primary				Boolean (which will be written to) indicating if the photon is a primary (non-scattered photon)
+     *		rng					The random number generator to use.
+     */
     template <typename Rng, typename Particle>
     __device__ void simulateInteraction(const float meanFreePathCM,
                                         const float stepCM,
@@ -45,6 +45,7 @@ struct InteractionHandlerAttenuating {
         float att = getMassAttenuationCoefficient(medium,
                                                   photon.energy,
                                                   c_param);
+
         if (density == 0.0f)
             return;
         photon.weight *= expf(-density * att * stepCM);
@@ -72,5 +73,5 @@ struct InteractionHandlerAttenuating {
     // Todo, pack as float3
     const cudaTextureObject_t _texMaterial; // texture<float4,cudaTextureType2D,cudaReadModeElementType>
 };
-}
-}
+} // namespace cuda
+} // namespace gpumci

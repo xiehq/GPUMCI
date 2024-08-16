@@ -7,6 +7,7 @@ set(Headers
 	SimpleMC.h
     PrecomputedMC.h
     PhaseSpaceMC.h
+	DosePhaseSpaceMC.h
     SpectMC.h
     PhaseSpaceStorePhotonsMC.h)
 
@@ -26,6 +27,7 @@ set(CudaFiles
 	SimpleMC.cu
 	PrecomputedMC.cu
     PhaseSpaceMC.cu
+	DosePhaseSpaceMC.cu
     SpectMC.cu
     PhaseSpaceStorePhotonsMC.cu)
 

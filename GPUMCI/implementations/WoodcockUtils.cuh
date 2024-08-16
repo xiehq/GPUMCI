@@ -1,8 +1,9 @@
 #pragma once
 
 #include <odl_cpp_utils/cuda/disableThrustWarnings.h>
-#include <thrust/device_vector.h>
 #include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
 
 #include <GPUMCI/physics/MaterialEntry.h>
 
@@ -14,5 +15,5 @@ thrust::device_vector<float> make_woodcock_tables(const float* densityDevice,
                                                   const int3 volumeSize,
                                                   const MaterialData& attenuationData);
 }
-}
-}
+} // namespace cuda
+} // namespace gpumci

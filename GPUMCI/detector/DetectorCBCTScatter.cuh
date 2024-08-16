@@ -83,14 +83,14 @@ struct DetectorCBCTScatter {
 
         // First assign pointer for better parallelism.
         const unsigned index = j * _pitch + i;
-        // If the boolean expression "myPhoton.primary" is true, the pointer "pointer" will be set \\
-        to the address of the element at index "index" of the "_primaryResult" array. If the expression \\
+        /* If the boolean expression "myPhoton.primary" is true, the pointer "pointer" will be set
+        to the address of the element at index "index" of the "_primaryResult" array. If the expression
         is false, "pointer" will be set to the address of the element at index "index" of the "_secondaryResult" array.
-        /*if (myPhoton.isTertiary(myPhoton.data)) {
+        if (myPhoton.isTertiary(myPhoton.data)) {
             printf("Yes Tertiary.\n");
         } else {
             printf("Not Tertiary.\n");
-        }/**/
+        }*/
         float* pointer;
         if (myPhoton.isTertiary()) {
             pointer = &_tertiaryResult[index];

@@ -32,7 +32,7 @@ add_definitions(-DEIGEN_DONT_ALIGN_STATICALLY) #Causes lots of issues sadly and 
 find_package(CUDA QUIET REQUIRED)
 
 # Pass options to NVCC
-set(CUDA_COMPUTE "52" CACHE STRING "Cuda compute capability to compile for")
+set(CUDA_COMPUTE "61" CACHE STRING "Cuda compute capability to compile for")
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_${CUDA_COMPUTE},code=sm_${CUDA_COMPUTE})
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-lineinfo)
 

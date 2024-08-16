@@ -1,35 +1,35 @@
+#include <algorithm>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
-#include <memory>
 #include <iostream>
-#include <algorithm>
+#include <memory>
 
 #include <odl_cpp_utils/cuda/disableThrustWarnings.h>
-#include <thrust/device_vector.h>
 #include <odl_cpp_utils/cuda/enableThrustWarnings.h>
+#include <thrust/device_vector.h>
 
 #include <GPUMCI/implementations/GainDoseMC.h>
 
-#include <GPUMCI/physics/MaterialEntry.h>
-#include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/implementations/MaterialUtils.cuh>
 #include <GPUMCI/implementations/WoodcockUtils.cuh>
+#include <GPUMCI/physics/CudaSettings.h>
+#include <GPUMCI/physics/MaterialEntry.h>
 
-//CudaMonteCarlo parts
+// CudaMonteCarlo parts
 #include <GPUMCI/detector/DoseDetector.cuh>
 #include <GPUMCI/detector/NoDetector.cuh>
-#include <GPUMCI/photongenerator/PhotonGeneratorGainImage.cuh>
-#include <GPUMCI/rng/CurandRng.cuh>
-#include <GPUMCI/interactions/PhotonPhoto.cuh>
-#include <GPUMCI/interactions/InteractionHandlerPhoton.cuh>
 #include <GPUMCI/interactions/ComptonPrecomputed.cuh>
+#include <GPUMCI/interactions/InteractionHandlerPhoton.cuh>
+#include <GPUMCI/interactions/PhotonPhoto.cuh>
 #include <GPUMCI/interactions/RayleighPrecomputed.cuh>
 #include <GPUMCI/interactions/WoodcockStep.cuh>
+#include <GPUMCI/photongenerator/PhotonGeneratorGainImage.cuh>
+#include <GPUMCI/rng/CurandRng.cuh>
 
 #include <GPUMCI/physics/CudaMonteCarlo.cuh>
 
-#include <odl_cpp_utils/utils/cast.h>
 #include <odl_cpp_utils/cuda/texture.h>
+#include <odl_cpp_utils/utils/cast.h>
 
 namespace gpumci {
 namespace cuda {
@@ -37,9 +37,9 @@ namespace {
 unsigned nThreads(int2 detectorSize) {
     return detectorSize.x * detectorSize.y;
 }
-}
+} // namespace
 
-//Struct that holds all data needed for the cuda MC simulation
+// Struct that holds all data needed for the cuda MC simulation
 struct GainDoseMCCuData {
     GainDoseMCCuData(const int3 volumeSize,
                      const int2 detectorSize,
@@ -57,12 +57,12 @@ struct GainDoseMCCuData {
                                                                        cudaReadModeElementType)),
           rng(nThreads(detectorSize)),
           rayleigh(rayleighTables),
-          compton(comptonTables) { //detectorSize.x * detectorSize.y) {
+          compton(comptonTables) { // detectorSize.x * detectorSize.y) {
 
         int n_energy = narrow_cast<int>(attenuationData.n_energies);
         int n_materials = narrow_cast<int>(attenuationData.n_materials);
 
-        //Interaction
+        // Interaction
         thrust::device_vector<float4> data = util::make_material_device(attenuationData);
         texMaterial = std::make_shared<BoundTexture2D<float4>>(int2{n_energy, n_materials},
                                                                cudaAddressModeClamp,
@@ -71,7 +71,7 @@ struct GainDoseMCCuData {
         texMaterial->setData(thrust::raw_pointer_cast(&data[0]));
     }
 
-    //Nocopy
+    // Nocopy
     GainDoseMCCuData(const GainDoseMCCuData&) = delete;
     GainDoseMCCuData& operator=(const GainDoseMCCuData&) = delete;
 
@@ -84,7 +84,7 @@ struct GainDoseMCCuData {
     const ComptonPrecomputed compton;
     curandRng rng;
 };
-}
+} // namespace cuda
 GainDoseMC::GainDoseMC(const Eigen::Vector3i& volumeSize,
                        const Eigen::Vector3d& volumeOrigin,
                        const Eigen::Vector3d& voxelSize,
@@ -93,7 +93,7 @@ GainDoseMC::GainDoseMC(const Eigen::Vector3i& volumeSize,
                        const InteractionTables& rayleighTables,
                        const InteractionTables& comptonTables)
     : _param{volumeSize, volumeOrigin, voxelSize, attenuationData.energyStep},
-      _detectorSize(detectorSize){
+      _detectorSize(detectorSize) {
     // Initialize the cuda side
     _cudaData = std::make_shared<cuda::GainDoseMCCuData>(make_int3(volumeSize),
                                                          make_int2(detectorSize),
@@ -103,12 +103,12 @@ GainDoseMC::GainDoseMC(const Eigen::Vector3i& volumeSize,
 }
 
 void GainDoseMC::setData(const float* densityDevice,
-                     const uint8_t* materialTypeDevice) {
-    //Set the density and materials
+                         const uint8_t* materialTypeDevice) {
+    // Set the density and materials
     _cudaData->densityVolume->setData(densityDevice);
     _cudaData->materialTypeVolume->setData(materialTypeDevice);
 
-    //Since the densities have updated, we need to update the woodcock table
+    // Since the densities have updated, we need to update the woodcock table
     int n_energy = narrow_cast<int>(_cudaData->attenuationData.n_energies);
     _cudaData->woodcockStep = std::make_shared<cuda::WoodcockStep>(densityDevice,
                                                                    materialTypeDevice,
@@ -129,12 +129,12 @@ void GainDoseMC::project(const Eigen::Vector3d& sourcePosition,
     // Setup kernel configuration
     unsigned numberOfThreads = cuda::nThreads(make_int2(_detectorSize));
     float2 inversePixelSize = make_float2(1.0f / (float)pixelDirectionU.norm(),
-        1.0f / (float)pixelDirectionV.norm());
+                                          1.0f / (float)pixelDirectionV.norm());
 
-    //Use no detector
+    // Use no detector
     cuda::NoDetector detector{};
 
-    //Use a gain photon generator
+    // Use a gain photon generator
     cuda::PhotonGeneratorGainImage photonGenerator{make_int2(_detectorSize),
                                                    make_float3(detectorOrigin),
                                                    make_float3(pixelDirectionU),
@@ -142,9 +142,9 @@ void GainDoseMC::project(const Eigen::Vector3d& sourcePosition,
                                                    make_float3(sourcePosition),
                                                    gain,
                                                    energyMin,
-                                                   energyMax - energyMin };
+                                                   energyMax - energyMin};
 
-    //Simple interaction handler
+    // Simple interaction handler
     auto interaction = cuda::makePhotonInteractionHandler(_cudaData->compton.deviceSide(),
                                                           _cudaData->rayleigh.deviceSide(),
                                                           cuda::PhotonPhoto{},
@@ -166,4 +166,4 @@ void GainDoseMC::project(const Eigen::Vector3d& sourcePosition,
           _cudaData->woodcockStep->deviceSide(),
           _cudaData->rng.deviceSide());
 }
-}
+} // namespace gpumci

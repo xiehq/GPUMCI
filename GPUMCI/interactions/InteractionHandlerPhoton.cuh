@@ -1,7 +1,7 @@
 #pragma once
 
-#include <GPUMCI/physics/CudaSettings.h>
 #include <GPUMCI/interactions/InteractionTypes.h>
+#include <GPUMCI/physics/CudaSettings.h>
 #include <odl_cpp_utils/cuda/cutil_math.h>
 
 #include <cuda_runtime.h>
@@ -37,7 +37,7 @@ whichPhotonInteraction(const float meanFreePath, const float density,
 
     float rn = rng.rand() / scale;
 
-    //printf("mfp=%f, rn=%f photo=%f, compton=%f, ray=%f \n", meanFreePath, rn, muPhoto, muCompton, muRayleigh);
+    // printf("mfp=%f, rn=%f photo=%f, compton=%f, ray=%f \n", meanFreePath, rn, muPhoto, muCompton, muRayleigh);
 
     float probabilitySum = muPhoto;
     if (rn <= probabilitySum) {
@@ -79,7 +79,7 @@ rotateDirectionVector(float3& direction, float costheta, Rng& rng) {
 
     direction = normalize(direction);
 }
-}
+} // namespace
 
 /**
  * Struct which handles interactions according to pre-selected
@@ -121,6 +121,7 @@ struct InteractionHandlerPhoton {
 
         // Sample the interaction type.
         InteractionType interactionType = whichPhotonInteraction(meanFreePathCM, density, muCompton, muPhoto, muRayleigh, rng);
+        // printf("Simulating Interaction (Photon)");
 
         // Energy, polar angle, and azimuthal angle for the scattered photon.
         float energy = photon.energy;
@@ -195,5 +196,5 @@ makePhotonInteractionHandler(const Compton& compton,
 {
     return {compton, rayleigh, photo, texMaterial};
 }
-}
-}
+} // namespace cuda
+} // namespace gpumci

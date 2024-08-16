@@ -37,25 +37,6 @@ struct CudaMonteCarloParticle {
         assert(norm(direction) < 1.001f);
     }
 
-    /*CudaMonteCarloParticle(const Eigen::Vector3d& position_,
-                           const Eigen::Vector3d& direction_,
-                           double energy,
-                           double weight,
-                           bool backscattered_,
-                           bool offfocal_,
-                           bool tubescattered_)
-        : position(make_float3(position_)),
-          direction(make_float3(direction_)),
-          energy(static_cast<float>(energy)),
-          weight(static_cast<float>(weight)),
-          backscattered(backscattered_),
-          offfocal(offfocal_),
-          tubescattered(tubescattered_) {
-        assert(energy >= 0.0f);
-        assert(norm(direction) > 0.999f);
-        assert(norm(direction) < 1.001f);
-    }/**/
-
     void
     setPosition(const Eigen::Vector3f& position_) {
         position = make_float3(position_);
@@ -66,7 +47,7 @@ struct CudaMonteCarloParticle {
     }
 
   public:
-    static int GetBits(int value, int offset, int count) {
+    static __host__ __device__ int GetBits(int value, int offset, int count) {
         return (value >> offset) & ((1 << count) - 1);
     }
 
